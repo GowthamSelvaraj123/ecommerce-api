@@ -1,14 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const {usersList, singleUser, addUser} = require("../controllers/user.controller")
 
-router.get('/', (req, res) => {
-    res.send("Get Users Successfully");
-})
-router.get('/:id', (req, res) => {
-    res.send("Get single user");
-})
-router.post('/', (req, res) => {
-    res.send("Post User Successfully");
-})
+router.get('/', usersList)
+router.get('/:id', singleUser)
+router.post('/', addUser)
 
 module.exports = router;
