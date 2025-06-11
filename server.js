@@ -15,7 +15,7 @@ app.get("/", (req, res) => {
     res.send("The Api Started");
 })
 app.use('/api/auth/', authRoutes);
-app.use('/api/products/', productRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/users', userRoutes);
