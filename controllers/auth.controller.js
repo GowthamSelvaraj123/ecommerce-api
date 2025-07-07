@@ -72,12 +72,10 @@ const forgotPassword = async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: "User not found with this email" });
-
         const resetToken = crypto.randomBytes(32).toString("hex");
         const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-
         user.resetToken = hashedToken;
-        user.resetTokenExpiry = Date.now() + 1000 * 60 * 15;
+        user.tokenExpiry = Date.now() + 1000 * 60 * 15;
         await user.save();
 
         const transporter = nodemailer.createTransport({
@@ -97,10 +95,8 @@ const forgotPassword = async (req, res) => {
             html: `<p>You requested to reset your password.</p>
                    <p>Click <a href="${resetLink}">here</a> to reset it. This link will expire in 15 minutes.</p>`
         };
-
         await transporter.sendMail(mailOptions);
-
-        res.status(200).json({ message: "Password reset link sent to email" });
+        res.status(200).json({ message: "Password reset link sent to email", data: resetLink });
 
     } catch (err) {
         console.error(err);
@@ -108,7 +104,7 @@ const forgotPassword = async (req, res) => {
     }
 }
 const resetPassword = async (req, res) => {
-     try {
+    try {
         const { token } = req.params;
         const { newPassword } = req.body;
 
@@ -120,17 +116,16 @@ const resetPassword = async (req, res) => {
 
         const user = await User.findOne({
             resetToken: hashedToken,
-            resetTokenExpiry: { $gt: Date.now() }
+            tokenExpiry: { $gt: Date.now() }
         });
 
         if (!user) {
             return res.status(400).json({ message: "Reset token is invalid or expired" });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         user.resetToken = undefined;
-        user.resetTokenExpiry = undefined;
+        user.tokenExpiry = undefined;
 
         await user.save();
 

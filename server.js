@@ -12,6 +12,7 @@ const connectDatabase = require('./config/db');
 require('dotenv').config();
 connectDatabase();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 

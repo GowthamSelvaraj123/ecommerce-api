@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'seller', 'moderator'],
     default: ['user'],
   },
+  resetToken: String, 
+  tokenExpiry: Date,
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

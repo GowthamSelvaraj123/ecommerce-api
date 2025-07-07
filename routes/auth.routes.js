@@ -6,7 +6,7 @@ const { createAccountLimiter } = require("../middlewares/rateLimit.middleware")
 router.post('/register', createAccountLimiter, register)
 router.post('/login', login)
 router.get('/profile', authMiddleware, profile);
-router.get('/forgotpassword', forgotPassword);
+router.post('/forgotpassword', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
 
 
