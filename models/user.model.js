@@ -13,6 +13,9 @@ const userSchema = new mongoose.Schema({
   },
   resetToken: String, 
   tokenExpiry: Date,
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  googleId: { type: String },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

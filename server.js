@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const passport = require('passport');
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const cartRoutes = require('./routes/cart.routes');
@@ -9,7 +10,10 @@ const userRoutes = require('./routes/user.routes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerFile = require('./docs/swagger.json');
 const connectDatabase = require('./config/db');
+
 require('dotenv').config();
+require('./config/passport');
+
 connectDatabase();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,6 +23,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.get("/", (req, res) => {
     res.send("The Api Started");
 })
+app.use(passport.initialize());
 app.use('/api/auth/', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);

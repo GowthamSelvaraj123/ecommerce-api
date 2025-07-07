@@ -5,6 +5,14 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const JWT_SECRET = process.env.JWT_SECRET || 'ecommerce@123';
+
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 require('dotenv').config();
 const register = async (req, res) => {
     try {
@@ -19,6 +27,7 @@ const register = async (req, res) => {
         }
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const verificationToken = crypto.randomBytes(32).toString("hex");
         const newUser = new User({
             name,
             email,
@@ -28,6 +37,20 @@ const register = async (req, res) => {
             roles: roles || ['user']
         });
         await newUser.save();
+        const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+        const mailOptions = {
+            to: email,
+            from: process.env.EMAIL_USER,
+            subject: 'Verify Your Email',
+            html: `
+        <p>Hi ${name},</p>
+        <p>Thank you for registering. Please verify your email by clicking the link below:</p>
+        <a href="${verificationLink}">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+      `
+        };
+
+        await transporter.sendMail(mailOptions);
         res.status(201).json({ message: "Registered Successfully", user: newUser });
     }
     catch (err) {
@@ -77,14 +100,6 @@ const forgotPassword = async (req, res) => {
         user.resetToken = hashedToken;
         user.tokenExpiry = Date.now() + 1000 * 60 * 15;
         await user.save();
-
-        const transporter = nodemailer.createTransport({
-            service: 'Gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
 
         const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
@@ -143,14 +158,25 @@ const logout = async (req, res) => {
         res.status(500).json({ message: "Logout Failed", error: err.message });
     }
 }
-const emailVerifictation = async (req, res) => {
+const verifyEmail = async (req, res) => {
     try {
-        res.status(200).json({ message: "Password Updated Successfully" })
+        const { token } = req.params;
+        const user = await User.findOne({ verificationToken: token });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired verification token" });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        await user.save();
+
+        res.status(200).json({ message: "Email verified successfully. You can now log in." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Email verification failed", error: err.message });
     }
-    catch (err) {
-        res.status(500).json({ message: "Password Updated Failed", error: err.message });
-    }
-}
+};
 const profile = async (req, res) => {
     try {
         const userId = req.user.userId;
